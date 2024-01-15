@@ -3,10 +3,11 @@ package core
 import (
 	"bufio"
 	"fmt"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"pg2go/db"
 	"pg2go/util"
 	"strings"
+
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 var findTablesSql = `
@@ -99,7 +100,8 @@ func TableToStruct(tableName string) (string, string) {
 		columnString = columnString + tmp
 	}
 
-	rs := fmt.Sprintf("type %s struct{\n%s}", util.UnderLineToHump(util.HumpToUnderLine(tableName)), columnString)
+	// rs := fmt.Sprintf("type %s struct{\n%s}", util.UnderLineToHump(util.HumpToUnderLine(tableName)), columnString)
+	rs := fmt.Sprintf("type %s struct{\ntableName struct{} `pg:\"%s\"`\n%s}", util.UnderLineToHump(util.HumpToUnderLine(tableName)), tableName, columnString)
 
 	return rs, pk
 }
@@ -129,11 +131,17 @@ func AddJSONFormGormTag(in, pk string) string {
 
 		propertyTmp = util.HumpToUnderLine(seperateArr[0])
 
-		if pk == propertyTmp {
-			oldLineTmp = header + fmt.Sprintf("    `gorm:\"column:%s,%s\" json:\"%s,%s\" form:\"%s\"`", propertyTmp, "primary_key", propertyTmp, "omitempty", propertyTmp) + footer
-		} else {
-			oldLineTmp = header + fmt.Sprintf("    `gorm:\"column:%s\" json:\"%s,%s\" form:\"%s\"`", propertyTmp, propertyTmp, "omitempty", propertyTmp) + footer
-		}
+		// if pk == propertyTmp {
+		// 	oldLineTmp = header + fmt.Sprintf("    `gorm:\"column:%s,%s\" json:\"%s,%s\" form:\"%s\"`", propertyTmp, "primary_key", propertyTmp, "omitempty", propertyTmp) + footer
+		// } else {
+		// 	oldLineTmp = header + fmt.Sprintf("    `gorm:\"column:%s\" json:\"%s,%s\" form:\"%s\"`", propertyTmp, propertyTmp, "omitempty", propertyTmp) + footer
+		// }
+		oldLineTmp = header + fmt.Sprintf("    `pg:\"%s\" json:\"%s,%s\"`", propertyTmp, propertyTmp, "omitempty") + footer
+		// if pk == propertyTmp {
+		// 	oldLineTmp = header + fmt.Sprintf("    `pg:\"%s,%s\" json:\"%s,%s\" form:\"%s\"`", propertyTmp, "primary_key", propertyTmp, "omitempty", propertyTmp) + footer
+		// } else {
+		// 	oldLineTmp = header + fmt.Sprintf("    `pg:\"%s\" json:\"%s,%s\" form:\"%s\"`", propertyTmp, propertyTmp, "omitempty", propertyTmp) + footer
+		// }
 		result = result + oldLineTmp + "\n"
 	}
 	return result

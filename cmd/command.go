@@ -3,12 +3,15 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"github.com/jinzhu/gorm"
 	"path/filepath"
 	"pg2go/core"
 	"pg2go/db"
 	"pg2go/util"
+	"regexp"
+	"strings"
 	"time"
+
+	"github.com/jinzhu/gorm"
 )
 
 var Host string
@@ -43,8 +46,35 @@ func InitDB(dataSource string) error {
 }
 
 func Execute() {
-	Init()
-	flag.Parse()
+	// Init()
+	// flag.Parse()
+	// dataSource := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s", Host, Port, User, DbName, SSLModel, Password)
+	// ./pg2go -dbname db -host 192.168.177.180 -out_dir ./tabs -port 19001 -user user_sensitive_1 -password GSEKSmJwg7P05VT6JtyIga4VyN5W7tNc1zuy2JppytfEqPubcVIlxToadKcXesHKK6LCfBtcMoyJirXgs1h1dMsNH5nE8vv22fb
+
+	// Host = "192.168.177.180"
+	// Port = 19001
+	// User = "user_sensitive_1"
+	// DbName = "db"
+	// SSLModel = "disable"
+	// Password = "GSEKSmJwg7P05VT6JtyIga4VyN5W7tNc1zuy2JppytfEqPubcVIlxToadKcXesHKK6LCfBtcMoyJirXgs1h1dMsNH5nE8vv22fb"
+	// OutDir = "./tabs"
+
+	// Host = "192.168.177.180"
+	// Port = 19002
+	// User = "user_sensitive_1"
+	// DbName = "db"
+	// SSLModel = "disable"
+	// Password = "GSEKSmJwg7P05VT6JtyIga4VyN5W7tNc1zuy2JppytfEqPubcVIlxToadKcXesHKK6LCfBtcMoyJirXgs1h1dMsNH5nE8vv22fb"
+	// OutDir = "./tabs"
+
+	Host = "192.168.177.180"
+	Port = 19003
+	User = "user_sensitive_1"
+	DbName = "db"
+	SSLModel = "disable"
+	Password = "GSEKSmJwg7P05VT6JtyIga4VyN5W7tNc1zuy2JppytfEqPubcVIlxToadKcXesHKK6LCfBtcMoyJirXgs1h1dMsNH5nE8vv22fb"
+	OutDir = "./tabs"
+
 	dataSource := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=%s password=%s", Host, Port, User, DbName, SSLModel, Password)
 	fmt.Println(dataSource)
 	err := InitDB(dataSource)
@@ -70,6 +100,14 @@ func Execute() {
 }
 
 func generate(outDir, tableName string) error {
+	reg := regexp.MustCompile(`_\d{4}_\d{2}`)
+	bl := reg.MatchString(tableName)
+	if bl{
+		return nil
+	}
+	// if strings.Index(tableName, "partition_of_") > -1 {
+	// 	return nil
+	// }
 	columns := core.FindColumns(tableName)
 	fmt.Println(columns)
 
@@ -79,7 +117,11 @@ func generate(outDir, tableName string) error {
 	// 生成带tag的结构体
 	goModelWithTag := core.AddJSONFormGormTag(goModel, pk)
 
-	writer := "package " + filepath.Base(outDir) + "\n" + goModelWithTag
+	imp := ""
+	if strings.Index(goModelWithTag, "*time2.JsonTime") > -1 {
+		imp = fmt.Sprintf("import (\n%s\n)\n\n", "\"fanfanlo.com/time2\"")
+	}
+	writer := "package " + filepath.Base(outDir) + "\n" + imp + goModelWithTag
 	fmt.Println(writer)
 	err := util.CreateFile(tableName, writer, outDir)
 	if err != nil {

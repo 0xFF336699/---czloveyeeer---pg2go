@@ -52,11 +52,14 @@ func TypeConvert(s string) string {
 	if In(s, []string{"numeric", "decimal", "real"}) {
 		return "decimal.Decimal"
 	}
+	if In(s, []string{"boolean", "bool", }) {
+		return "bool"
+	}
 	if In(s, []string{"bytea"}) {
 		return "[]byte"
 	}
 	if strings.Contains(s, "time") || In(s, []string{"date"}) {
-		return "*time.Time"
+		return "*time2.JsonTime"
 	}
 	if In(s, []string{"bigint", "bigserial", ""}) {
 		return "json.RawMessage"
